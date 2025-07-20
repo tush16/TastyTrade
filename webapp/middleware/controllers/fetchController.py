@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from dependencies.injectors import FetchServiceProvider
 from services.fetchService import FetchService
-from models.fetchModel import FetchModel
+from serializers.fetchSerializer import FetchSerializer
 
 router = APIRouter(tags=["Fetch API"])
 

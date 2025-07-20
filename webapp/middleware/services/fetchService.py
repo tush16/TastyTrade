@@ -1,5 +1,5 @@
 from repositories.fetchRepository import FetchRepository
-from models.fetchModel import FetchModel
+from serializers.fetchSerializer import FetchSerializer
 from utils.repository import RepositoryUtils
 
 
@@ -16,4 +16,4 @@ class FetchService:
         
         raw_data = await self.repository.fetch_data()
         validated_data = RepositoryUtils.validate(raw_data)
-        return FetchModel.FetchResponse(**validated_data[0])
+        return FetchSerializer.FetchResponse(**validated_data[0])
