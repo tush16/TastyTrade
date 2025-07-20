@@ -14,6 +14,7 @@ class FetchService:
     ) -> FetchModel.FetchResponse:
         """Asynchronously fetch data product configuration details."""
         
+        
         raw_data = await self.repository.fetch_data()
         validated_data = RepositoryUtils.validate(raw_data)
         return FetchSerializer.FetchResponse(**validated_data[0])
