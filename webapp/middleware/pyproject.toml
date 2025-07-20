@@ -1,0 +1,16 @@
+[project]
+name = "middleware"
+version = "0.1.0"
+description = "This is a probabilistic middleware service for TastyTrade that delivers data-driven insights on trades using advanced statistical formulas. It analyzes real-time market data to provide probability-based opinions, helping traders make more informed decisions with greater confidence and precision."
+authors = [
+    {name = "tusharchoudhary8051@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
