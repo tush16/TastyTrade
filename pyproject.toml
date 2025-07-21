@@ -1,16 +1,26 @@
 [project]
-name = "middleware"
+name = "webapp"
 version = "0.1.0"
 description = "This is a probabilistic middleware service for TastyTrade that delivers data-driven insights on trades using advanced statistical formulas. It analyzes real-time market data to provide probability-based opinions, helping traders make more informed decisions with greater confidence and precision."
 authors = [
     {name = "tusharchoudhary8051@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13,<4.0"
 dependencies = [
+    "fastapi (>=0.116.1,<0.117.0)",
+    "uvicorn (>=0.35.0,<0.36.0)",
+    "tastytrade-sdk (>=1.2.0,<2.0.0)",
+    "dotenv (>=0.9.9,<0.10.0)",
+    "httpx (>=0.28.1,<0.29.0)"
 ]
+packages = [{ include = "webapp" }]
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^4.2.0"
+

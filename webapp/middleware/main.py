@@ -1,9 +1,6 @@
-from fastapi import FastAPI, Depends
-from fastapi.security import HTTPBearer
+from fastapi import FastAPI
 from dotenv import load_dotenv
-from controllers import (
-    fetchController,
-)
+from webapp.middleware.controllers import authController
 
 load_dotenv()
 
@@ -13,4 +10,4 @@ app = FastAPI(
     version="0.1.0",
 )
 
-app.include_router(dim_controller.router)
+app.include_router(authController.router)
