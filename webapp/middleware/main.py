@@ -1,7 +1,13 @@
 from fastapi import FastAPI, Depends
 from dotenv import load_dotenv
 from fastapi.security import HTTPBearer
-from controllers import authController, stockController
+from controllers import (
+    authController,
+    equitiesController,
+    futuresController,
+    optionsController,
+    optionChainsController,
+)
 
 load_dotenv()
 
@@ -14,4 +20,7 @@ app = FastAPI(
 security = HTTPBearer()
 
 app.include_router(authController.router)
-app.include_router(stockController.router, dependencies=[Depends(security)])
+app.include_router(equitiesController.router, dependencies=[Depends(security)])
+app.include_router(futuresController.router, dependencies=[Depends(security)])
+app.include_router(optionsController.router, dependencies=[Depends(security)])
+app.include_router(optionChainsController.router, dependencies=[Depends(security)])

@@ -4,7 +4,7 @@ API_BASE = "http://localhost:8000"
 
 
 def list_equities(token):
-    url = f"{API_BASE}/equities/list"
+    url = f"{API_BASE}/equities/top"
     headers = {"Authorization": f"Bearer {token}"}
     resp = requests.get(url, headers=headers, timeout=10)
     return resp.json() if resp.status_code == 200 else []

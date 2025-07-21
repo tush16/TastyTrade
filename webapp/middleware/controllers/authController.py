@@ -5,7 +5,7 @@ from serializers.authSerializer import AuthSerializer
 router = APIRouter(tags=["Session API"])
 
 
-@router.post("/login", response_model=AuthSerializer.AuthResponse)
+@router.post("/session", response_model=AuthSerializer.AuthResponse)
 async def login(auth: AuthSerializer.AuthRequest):
     token = AuthService.login(auth.login, auth.password)
     if not token:
