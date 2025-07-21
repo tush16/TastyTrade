@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
-from webapp.middleware.controllers import authController
+from controllers import authController
 
 load_dotenv()
 

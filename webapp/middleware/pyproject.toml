@@ -1,5 +1,5 @@
 [project]
-name = "webapp"
+name = "middleware"
 version = "0.1.0"
 description = "This is a probabilistic middleware service for TastyTrade that delivers data-driven insights on trades using advanced statistical formulas. It analyzes real-time market data to provide probability-based opinions, helping traders make more informed decisions with greater confidence and precision."
 authors = [
@@ -14,8 +14,6 @@ dependencies = [
     "dotenv (>=0.9.9,<0.10.0)",
     "httpx (>=0.28.1,<0.29.0)"
 ]
-packages = [{ include = "webapp" }]
-
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

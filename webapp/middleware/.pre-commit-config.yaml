@@ -3,23 +3,16 @@ repos:
     rev: v4.6.0
     hooks:
       - id: check-added-large-files
-        files: ^webapp/
       - id: check-json
-        files: ^webapp/
       - id: check-toml
-        files: ^webapp/
       - id: check-yaml
-        files: ^webapp/
       - id: check-docstring-first
-        files: ^webapp/  
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.5.7
     hooks:
       - id: ruff
         args: [--fix]
-        files: ^webapp/
       - id: ruff-format
-        files: ^webapp/
   - repo: https://github.com/PyCQA/bandit.git
     rev: 1.7.9
     hooks:
@@ -32,18 +25,15 @@ repos:
         types: [python]
         require_serial: true
         args: ["--skip", "B101", "--severity-level", "medium"]
-        files: ^webapp/
   -   repo: https://github.com/pre-commit/mirrors-mypy
       rev: 'v1.11.1'
       hooks:
       -   id: mypy
           args: [--ignore-missing-imports]
           additional_dependencies: ['types-requests','types-PyYAML']
-          files: ^webapp/
   - repo: https://github.com/compilerla/conventional-pre-commit
     rev: v3.4.0
     hooks:
       - id: conventional-pre-commit
         stages: [commit-msg]
         args: []
-        files: ^webapp/

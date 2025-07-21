@@ -1,6 +1,6 @@
 import httpx
-from webapp.middleware.config.logging import logger
-from webapp.middleware.config.settings import settings
+from config.logging import logger
+from config.settings import settings
 
 
 class AuthService:

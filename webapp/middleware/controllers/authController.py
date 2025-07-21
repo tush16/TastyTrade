@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from webapp.middleware.services.authService import AuthService
-from webapp.middleware.serializers.authSerializer import AuthSerializer
+from services.authService import AuthService
+from serializers.authSerializer import AuthSerializer
 
 router = APIRouter(tags=["Session API"])
 
