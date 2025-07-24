@@ -1,14 +1,16 @@
 import streamlit as st
-from pages.list import show_popular
-from pages.search import show_search
 
-st.set_page_config(page_title="Equities Dashboard", layout="wide")
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Popular Stocks", "Search Stocks"])
+if "session_token" not in st.session_state:
+    st.session_state.session_token = ""
 
-token = st.sidebar.text_input("Session Token 🔑", type="password")
+pages = [
+    st.Page("pages/home.py", title="Home"),
+    st.Page("pages/list.py", title="Popular Stocks"),
+    st.Page("pages/options.py", title="Equity Options"),
+    st.Page("pages/search.py", title="Search Stocks"),
+    st.Page("pages/option_chain.py", title="Option Chain Nested"),
+    st.Page("pages/futures.py", title="Futures"),
+]
 
-if page == "Popular Stocks":
-    show_popular(token)
-elif page == "Search Stocks":
-    show_search(token)
+nav = st.navigation(pages, position="sidebar", expanded=True)
+nav.run()

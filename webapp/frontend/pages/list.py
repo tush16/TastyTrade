@@ -1,14 +1,14 @@
 import streamlit as st
 from api import list_equities
 
+st.title("Popular U.S. Stocks")
+st.caption("Fetched from TastyTrade APIs")
 
-def show_popular(token):
-    st.title("Popular U.S. Stocks")
-    st.caption("Fetched from TastyTrade APIs")
-    if not token:
-        st.warning("Please enter your Session Token in the sidebar.")
-        return
+token = st.session_state.get("session_token", "")
 
+if not token:
+    st.warning("Please enter your Session Token in the sidebar.")
+else:
     with st.spinner("Fetching data..."):
         data = list_equities(token)
 
