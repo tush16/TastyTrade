@@ -10,13 +10,9 @@ class AuthService:
             base_url = settings.BASE_URL
             logger.info(base_url)
             url = f"{base_url}/sessions"
-
             payload = {"login": login, "password": password}
-
             headers = {"Content-Type": "application/json", "Accept": "application/json"}
-
             response = httpx.post(url, json=payload, headers=headers)
-
             if response.status_code == 201:
                 session_token = response.json()["data"]["session-token"]
                 logger.info("Login success: session token retrieved")

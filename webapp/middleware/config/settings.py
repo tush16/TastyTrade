@@ -10,6 +10,8 @@ class Settings:
 
         self.ENV: str = os.getenv("ENV")
         self.BASE_URL: str = os.getenv("BASE_URL")
+        self.LOGIN: str = os.getenv("LOGIN")
+        self.PASSWORD: str = os.getenv("PASSWORD")
 
 
 # Singleton instance to be used throughout the app
