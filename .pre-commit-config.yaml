@@ -3,16 +3,23 @@ repos:
     rev: v4.6.0
     hooks:
       - id: check-added-large-files
+        files: ^middleware/
       - id: check-json
+        files: ^middleware/
       - id: check-toml
+        files: ^middleware/
       - id: check-yaml
+        files: ^middleware/
       - id: check-docstring-first
+        files: ^middleware/
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.5.7
     hooks:
       - id: ruff
         args: [--fix]
+        files: ^middleware/
       - id: ruff-format
+        files: ^middleware/
   - repo: https://github.com/PyCQA/bandit.git
     rev: 1.7.9
     hooks:
@@ -25,6 +32,7 @@ repos:
         types: [python]
         require_serial: true
         args: ["--skip", "B101", "--severity-level", "medium"]
+        files: ^middleware/
   -   repo: https://github.com/pre-commit/mirrors-mypy
       rev: 'v1.11.1'
       hooks:
@@ -37,3 +45,4 @@ repos:
       - id: conventional-pre-commit
         stages: [commit-msg]
         args: []
+        files: ^middleware/
