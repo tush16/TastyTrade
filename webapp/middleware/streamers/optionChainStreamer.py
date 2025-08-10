@@ -8,6 +8,8 @@ from tastytrade.instruments import get_option_chain
 from tastytrade.dxfeed import Greeks, Quote
 from utils.common import safe_float, parse_option_symbol
 from config.logging import logger
+from collections import defaultdict
+from datetime import date, datetime
 
 
 class StreamManager:
@@ -22,6 +24,31 @@ class StreamManager:
         # State for grouping
         self.last_quotes: Dict[str, dict] = {}
         self.last_greeks: Dict[str, dict] = {}
+
+
+    async def _fetch_option_chain(self, symbol: str):
+        """Fetch option chain from Tastytrade API without SDK's Pydantic models."""
+        symbol_enc = symbol.replace("/", "%2F")
+        data = await self.session._a_get(f"/option-chains/{symbol_enc}")
+
+        chain = defaultdict(list)
+        for item in data.get("items", []):
+            raw_exp = item.get("expiration-date")
+            if not raw_exp:
+                continue  
+            try:
+                if len(raw_exp) == 10:  
+                    exp_date = date.fromisoformat(raw_exp)
+                else: 
+                    exp_date = datetime.fromisoformat(raw_exp).date()
+            except ValueError as e:
+                logger.warning(f"Skipping invalid date '{raw_exp}': {e}")
+                continue
+
+            chain[exp_date].append(item)
+
+        logger.info(f"Fetched option chain for {symbol}: {len(chain)} expiries")
+        return chain
 
     async def try_send_grouped(self, symbol: str, expiry: str, event_symbol: str):
         """Attempt to send grouped data when both quote and greeks are available"""
@@ -56,11 +83,10 @@ class StreamManager:
         logger.info(f"Initializing stream for {key}...")
 
         # Get option chain data
-        chain = get_option_chain(self.session, symbol)
+        chain = await self._fetch_option_chain(symbol)
         if not chain:
             logger.error(f"No option chain found for {symbol}")
             return
-
         try:
             expiry_date = datetime.strptime(expiry, "%Y-%m-%d").date()
         except ValueError:
@@ -77,12 +103,14 @@ class StreamManager:
             return
 
         # Prepare symbols for subscription
-        streamer_symbols = [o.streamer_symbol for o in options]
-        underlying_symbol = options[0].underlying_symbol
+        streamer_symbols = [o["streamer-symbol"] for o in options]
+        underlying_symbol = options[0]["underlying-symbol"]
+
+        logger.info(f"Subscribing to {len(streamer_symbols)} options for {symbol} - {expiry}")
+        logger.info(f"Underlying symbol: {underlying_symbol}")
 
         async with DXLinkStreamer(self.session) as streamer:
             # Subscribe to both data types
-            logger.info(f"Subscribing to {len(streamer_symbols)} options...")
             await streamer.subscribe(Quote, streamer_symbols + [underlying_symbol])
             await streamer.subscribe(Greeks, streamer_symbols)
             logger.info("Subscriptions complete")
