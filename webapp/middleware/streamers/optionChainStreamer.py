@@ -1,16 +1,16 @@
 import asyncio
 from datetime import datetime
 import time
-from typing import Set, Dict, Tuple
-from fastapi import WebSocket, WebSocketDisconnect
+from typing import Set, Dict, Tuple, List
+from fastapi import WebSocket, WebSocketDisconnect, Depends, APIRouter, HTTPException
 from tastytrade import Session, DXLinkStreamer
-from tastytrade.instruments import get_option_chain
 from tastytrade.dxfeed import Greeks, Quote
 from utils.common import safe_float, parse_option_symbol
 from config.logging import logger
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date
 
+router = APIRouter()
 
 class StreamManager:
     def __init__(self, session: Session):
@@ -20,43 +20,13 @@ class StreamManager:
         self.last_reset = datetime.now()
         self.last_send = 0.0
         self.message_count = 0
-
-        # State for grouping
         self.last_quotes: Dict[str, dict] = {}
         self.last_greeks: Dict[str, dict] = {}
 
-
-    async def _fetch_option_chain(self, symbol: str):
-        """Fetch option chain from Tastytrade API without SDK's Pydantic models."""
-        symbol_enc = symbol.replace("/", "%2F")
-        data = await self.session._a_get(f"/option-chains/{symbol_enc}")
-
-        chain = defaultdict(list)
-        for item in data.get("items", []):
-            raw_exp = item.get("expiration-date")
-            if not raw_exp:
-                continue  
-            try:
-                if len(raw_exp) == 10:  
-                    exp_date = date.fromisoformat(raw_exp)
-                else: 
-                    exp_date = datetime.fromisoformat(raw_exp).date()
-            except ValueError as e:
-                logger.warning(f"Skipping invalid date '{raw_exp}': {e}")
-                continue
-
-            chain[exp_date].append(item)
-
-        logger.info(f"Fetched option chain for {symbol}: {len(chain)} expiries")
-        return chain
-
     async def try_send_grouped(self, symbol: str, expiry: str, event_symbol: str):
-        """Attempt to send grouped data when both quote and greeks are available"""
         if event_symbol in self.last_quotes and event_symbol in self.last_greeks:
             quote = self.last_quotes[event_symbol]
             greek = self.last_greeks[event_symbol]
-
-            # Verify timestamps are reasonably close (e.g., within 2 seconds)
             quote_time = datetime.fromisoformat(quote["quote_data"]["timestamp"])
             greek_time = datetime.fromisoformat(greek["greeks_data"]["timestamp"])
 
@@ -73,54 +43,32 @@ class StreamManager:
                         **quote["parsed"],
                     },
                 )
-                # Clear the cached values
                 self.last_quotes.pop(event_symbol, None)
                 self.last_greeks.pop(event_symbol, None)
 
-    async def start_stream(self, symbol: str, expiry: str):
-        """Main streaming method for a specific symbol/expiry combination"""
+    async def start_stream(self, symbol: str, expiry: str, option_symbols: List[str]):
         key = (symbol, expiry)
         logger.info(f"Initializing stream for {key}...")
 
-        # Get option chain data
-        chain = await self._fetch_option_chain(symbol)
-        if not chain:
-            logger.error(f"No option chain found for {symbol}")
-            return
-        try:
-            expiry_date = datetime.strptime(expiry, "%Y-%m-%d").date()
-        except ValueError:
-            logger.error(f"Invalid expiry format: {expiry}")
+        if not option_symbols:
+            logger.error(f"No option symbols provided for {symbol} - {expiry}")
             return
 
-        if expiry_date not in chain:
-            logger.error(f"No options found for {symbol} with expiry {expiry_date}.")
-            return
+        # For underlying symbol, just use the main symbol (e.g. "AAPL")
+        underlying_symbol = symbol
 
-        options = chain[expiry_date]
-        if not options:
-            logger.error("No options available for this expiry.")
-            return
-
-        # Prepare symbols for subscription
-        streamer_symbols = [o["streamer-symbol"] for o in options]
-        underlying_symbol = options[0]["underlying-symbol"]
-
-        logger.info(f"Subscribing to {len(streamer_symbols)} options for {symbol} - {expiry}")
+        logger.info(f"Subscribing to {len(option_symbols)} options for {symbol} - {expiry}")
         logger.info(f"Underlying symbol: {underlying_symbol}")
 
         async with DXLinkStreamer(self.session) as streamer:
-            # Subscribe to both data types
-            await streamer.subscribe(Quote, streamer_symbols + [underlying_symbol])
-            await streamer.subscribe(Greeks, streamer_symbols)
+            await streamer.subscribe(Quote, option_symbols + [underlying_symbol])
+            await streamer.subscribe(Greeks, option_symbols)
             logger.info("Subscriptions complete")
 
             async def listen_quotes():
-                """Handle all incoming quote messages"""
                 async for event in streamer.listen(Quote):
                     try:
                         if event.event_symbol == underlying_symbol:
-                            # Handle underlying quote separately
                             await self.broadcast(
                                 symbol,
                                 expiry,
@@ -139,7 +87,6 @@ class StreamManager:
                         else:
                             parsed = parse_option_symbol(event.event_symbol)
                             if parsed:
-                                # Store the quote
                                 self.last_quotes[event.event_symbol] = {
                                     "quote_data": {
                                         "bid_price": safe_float(event.bid_price),
@@ -150,19 +97,15 @@ class StreamManager:
                                     },
                                     "parsed": parsed,
                                 }
-                                await self.try_send_grouped(
-                                    symbol, expiry, event.event_symbol
-                                )
+                                await self.try_send_grouped(symbol, expiry, event.event_symbol)
                     except Exception as e:
                         logger.error(f"Quote processing error: {e}")
 
             async def listen_greeks():
-                """Handle all incoming Greeks messages"""
                 async for event in streamer.listen(Greeks):
                     try:
                         parsed = parse_option_symbol(event.event_symbol)
                         if parsed:
-                            # Store the greeks
                             self.last_greeks[event.event_symbol] = {
                                 "greeks_data": {
                                     "price": safe_float(event.price),
@@ -176,13 +119,10 @@ class StreamManager:
                                 },
                                 "parsed": parsed,
                             }
-                            await self.try_send_grouped(
-                                symbol, expiry, event.event_symbol
-                            )
+                            await self.try_send_grouped(symbol, expiry, event.event_symbol)
                     except Exception as e:
                         logger.error(f"Greeks processing error: {e}")
 
-            # Start listeners
             processors = [
                 asyncio.create_task(listen_quotes()),
                 asyncio.create_task(listen_greeks()),
@@ -198,15 +138,13 @@ class StreamManager:
                 raise
 
     async def monitor_rates(self):
-        """Log message rates every minute"""
         while True:
             await asyncio.sleep(60)
             logger.info(f"Message rate: {self.message_count}/min")
             self.message_count = 0
             self.last_reset = datetime.now()
 
-    async def connect(self, websocket: WebSocket, symbol: str, expiry: str):
-        """Handle new WebSocket connection"""
+    async def connect(self, websocket: WebSocket, symbol: str, expiry: str, option_symbols: List[str]):
         key = (symbol, expiry)
         await websocket.accept()
         if key not in self.clients:
@@ -215,10 +153,9 @@ class StreamManager:
         logger.info(f"Client connected: {websocket.client} for {symbol} - {expiry}")
 
         if key not in self.tasks:
-            self.tasks[key] = asyncio.create_task(self.start_stream(symbol, expiry))
+            self.tasks[key] = asyncio.create_task(self.start_stream(symbol, expiry, option_symbols))
 
     def disconnect(self, websocket: WebSocket):
-        """Handle client disconnection"""
         for key, clients in self.clients.items():
             if websocket in clients:
                 clients.remove(websocket)
@@ -231,9 +168,8 @@ class StreamManager:
                 break
 
     async def broadcast(self, symbol: str, expiry: str, data: dict):
-        """Send data to all connected clients with rate limiting"""
         now = time.time()
-        if now - self.last_send < 0.1:  # 100ms minimum between sends
+        if now - self.last_send < 0.1:
             await asyncio.sleep(0.1 - (now - self.last_send))
         self.last_send = time.time()
         self.message_count += 1
