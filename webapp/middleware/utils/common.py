@@ -10,6 +10,18 @@ def safe_float(value) -> float:
         return float(value) if value is not None else 0.0
     except (ValueError, TypeError):
         return 0.0
+    
+def sanitize_inf(data):
+    """Recursively replace Infinity/-Infinity/NaN with None (JSON-safe)."""
+    if isinstance(data, dict):
+        return {k: sanitize_inf(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [sanitize_inf(v) for v in data]
+    elif isinstance(data, float):
+        if data == float("inf") or data == float("-inf") or data != data:  # NaN check
+            return None
+        return data
+    return data
 
 def parse_option_symbol(symbol: str) -> Optional[dict]:
     """

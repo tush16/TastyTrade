@@ -6,7 +6,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from tastytrade import Session, DXLinkStreamer
 from tastytrade.dxfeed import Greeks, Quote
 from config.logging import logger
-from utils.common import safe_float, parse_option_symbol, expiry_yymmdd_to_utc_16et
+from utils.common import safe_float, parse_option_symbol, expiry_yymmdd_to_utc_16et, sanitize_inf
 from utils.optionChainMetrics import (calculate_pmp_pop_ce_sell, calculate_pmp_pop_pe_sell)
 
 class StreamManager:
@@ -281,7 +281,7 @@ class StreamManager:
         to_remove = []
         for client in self.clients.get(key, []):
             try:
-                await client.send_json(data)
+                await client.send_json(sanitize_inf(data))
             except WebSocketDisconnect:
                 to_remove.append(client)
             except Exception as e:
