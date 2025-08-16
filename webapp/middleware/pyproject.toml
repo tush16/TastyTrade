@@ -14,7 +14,9 @@ dependencies = [
     "httpx (>=0.28.1,<0.29.0)",
     "tastytrade (>=10.3.0,<11.0.0)",
     "python-dotenv (>=1.1.1,<2.0.0)",
-    "pyodbc (>=5.2.0,<6.0.0)"
+    "pyodbc (>=5.2.0,<6.0.0)",
+    "scipy (>=1.16.1,<2.0.0)",
+    "types-pytz (>=2025.2.0.20250809,<2026.0.0.0)",
 ]
 
 [build-system]
@@ -23,4 +25,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.2.0"
-
+types-pytz = "^2025.2.0.20250809"
