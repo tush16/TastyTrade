@@ -16,6 +16,7 @@ class Settings:
         self.DB_NAME: str = os.getenv("DB_NAME")
         self.CLIENT_ID: str = os.getenv("CLIENT_ID")
         self.CLIENT_SECRET: str = os.getenv("CLIENT_SECRET")
+        self.DATABASE_URL: str = os.getenv("DATABASE_URL")
 
 
 # Singleton instance to be used throughout the app
