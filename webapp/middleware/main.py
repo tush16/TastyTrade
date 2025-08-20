@@ -18,6 +18,7 @@ from contextlib import asynccontextmanager
 
 load_dotenv()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await connect_to_db()
@@ -31,14 +32,15 @@ async def lifespan(app: FastAPI):
     yield
 
     await close_db_connection()
-    
+
     logger.info("Application shutdown complete.")
+
 
 app = FastAPI(
     title="OptionsAnalytics APIs",
     description="This API requires authentication using Session Token",
     version="0.1.0",
-    lifespan=lifespan,   
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -56,8 +58,8 @@ app.include_router(optionController.router)
 app.include_router(optionChainController.router)
 app.include_router(futuresController.router, dependencies=[Depends(security)])
 
+
 @app.get("/test-db")
 async def test_db(conn: asyncpg.Connection = Depends(get_db)):
     row = await conn.fetchrow("SELECT NOW() as now")
     return {"db_time": row["now"]}
-

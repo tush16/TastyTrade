@@ -25,6 +25,7 @@ def get_sdk_expiries(symbol: str, session: Session = Depends(get_session)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/options/expiries")
 async def get_expiries(symbol: str, session: Session = Depends(get_session)):
     try:
@@ -32,14 +33,14 @@ async def get_expiries(symbol: str, session: Session = Depends(get_session)):
         data = await session._a_get(f"/option-chains/{symbol_enc}")
         expiries = set()
         for item in data.get("items", []):
-            raw_exp = item.get("expiration-date") 
+            raw_exp = item.get("expiration-date")
             if not raw_exp:
                 continue
 
             try:
-                if len(raw_exp) == 10:  
+                if len(raw_exp) == 10:
                     exp_date = date.fromisoformat(raw_exp)
-                else: 
+                else:
                     exp_date = datetime.fromisoformat(raw_exp).date()
                 expiries.add(exp_date.isoformat())
             except ValueError:
@@ -53,8 +54,11 @@ async def get_expiries(symbol: str, session: Session = Depends(get_session)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/option-chains")
-async def get_expiries_with_symbols(symbol: str, session: Session = Depends(get_session)):
+async def get_expiries_with_symbols(
+    symbol: str, session: Session = Depends(get_session)
+):
     try:
         symbol_enc = symbol.replace("/", "%2F")
         data = await session._a_get(f"/option-chains/{symbol_enc}")
@@ -62,7 +66,7 @@ async def get_expiries_with_symbols(symbol: str, session: Session = Depends(get_
         expiry_map = defaultdict(list)
         for item in data.get("items", []):
             raw_exp = item.get("expiration-date")
-            option_symbol = item.get("streamer-symbol") 
+            option_symbol = item.get("streamer-symbol")
 
             if not raw_exp or not option_symbol:
                 continue
@@ -80,7 +84,7 @@ async def get_expiries_with_symbols(symbol: str, session: Session = Depends(get_
         if not expiry_map:
             raise HTTPException(status_code=404, detail="No expiries found")
 
-        return expiry_map  
+        return expiry_map
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

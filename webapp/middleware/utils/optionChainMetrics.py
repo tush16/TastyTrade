@@ -5,6 +5,7 @@ from scipy.stats import norm
 
 CONTRACT_MULTIPLIER = 100.0
 
+
 def calculate_pmp_pop_ce_sell(
     current_price: float,
     strike: float,
@@ -46,6 +47,7 @@ def calculate_pmp_pop_ce_sell(
     ev = None  # unbounded loss → undefined simple EV
 
     return pmp, pop, max_profit, max_loss, ev
+
 
 def calculate_pmp_pop_pe_sell(
     current_price: float,

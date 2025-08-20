@@ -6,8 +6,17 @@ from fastapi import WebSocket, WebSocketDisconnect
 from tastytrade import Session, DXLinkStreamer
 from tastytrade.dxfeed import Greeks, Quote
 from config.logging import logger
-from utils.common import safe_float, parse_option_symbol, expiry_yymmdd_to_utc_16et, sanitize_inf
-from utils.optionChainMetrics import (calculate_pmp_pop_ce_sell, calculate_pmp_pop_pe_sell)
+from utils.common import (
+    safe_float,
+    parse_option_symbol,
+    expiry_yymmdd_to_utc_16et,
+    sanitize_inf,
+)
+from utils.optionChainMetrics import (
+    calculate_pmp_pop_ce_sell,
+    calculate_pmp_pop_pe_sell,
+)
+
 
 class StreamManager:
     def __init__(self, session: Session):
@@ -21,7 +30,6 @@ class StreamManager:
         # last_* caches keyed by event_symbol (for options) and by underlying symbol (for the underlying)
         self.last_quotes: Dict[str, dict] = {}
         self.last_greeks: Dict[str, dict] = {}
-
 
     async def try_send_grouped(self, symbol: str, expiry: str, event_symbol: str):
         """Process and broadcast option data with calculations when quote and Greeks are available."""
@@ -44,7 +52,7 @@ class StreamManager:
                 return
 
             # Option type and mid
-            option_type = 'CALL' if parsed.get('call_put') == 'C' else 'PUT'
+            option_type = "CALL" if parsed.get("call_put") == "C" else "PUT"
             bid = safe_float(quote["quote_data"].get("bid_price"))
             ask = safe_float(quote["quote_data"].get("ask_price"))
             mid_price = (bid + ask) / 2.0 if (bid > 0 and ask > 0) else (bid or ask)
@@ -53,16 +61,24 @@ class StreamManager:
             underlying_quote = self.last_quotes.get(symbol, {}).get("quote_data", {})
             current_price = (
                 safe_float(underlying_quote.get("last_price"))
-                or ((safe_float(underlying_quote.get("bid_price")) + safe_float(underlying_quote.get("ask_price"))) / 2.0)
+                or (
+                    (
+                        safe_float(underlying_quote.get("bid_price"))
+                        + safe_float(underlying_quote.get("ask_price"))
+                    )
+                    / 2.0
+                )
                 or safe_float(underlying_quote.get("bid_price"))
                 or safe_float(underlying_quote.get("ask_price"))
             )
             if current_price <= 0 or mid_price is None or mid_price <= 0:
-                logger.warning(f"Missing prices for {event_symbol}: underlying={current_price}, mid={mid_price}")
+                logger.warning(
+                    f"Missing prices for {event_symbol}: underlying={current_price}, mid={mid_price}"
+                )
                 return
 
             # Use strike IV as both strike IV and underlying IV proxy (decimal)
-            iv_strike = safe_float(greek["greeks_data"].get("IV")) 
+            iv_strike = safe_float(greek["greeks_data"].get("IV"))
             iv_instrument = iv_strike
 
             # Expiry UTC from YYMMDD @ 16:00 ET
@@ -73,7 +89,7 @@ class StreamManager:
                 return
 
             try:
-                if option_type == 'CALL':
+                if option_type == "CALL":
                     pmp, pop, max_profit, max_loss, ev = calculate_pmp_pop_ce_sell(
                         current_price=current_price,
                         strike=parsed["strike"],
@@ -101,7 +117,7 @@ class StreamManager:
                 "expiry_date": expiry_utc.isoformat(),
                 "strike_price": parsed["strike"],
                 "option_type": option_type,
-                "iv_strike": iv_strike * 100.0,  
+                "iv_strike": iv_strike * 100.0,
                 "mid_price": mid_price,
                 "bid_price": bid,
                 "ask_price": ask,
@@ -143,7 +159,9 @@ class StreamManager:
             return
 
         underlying_symbol = symbol
-        logger.info(f"Subscribing to {len(option_symbols)} options for {symbol} - {expiry}")
+        logger.info(
+            f"Subscribing to {len(option_symbols)} options for {symbol} - {expiry}"
+        )
         logger.info(f"Underlying symbol: {underlying_symbol}")
 
         async with DXLinkStreamer(self.session) as streamer:
@@ -160,12 +178,14 @@ class StreamManager:
                                 "ask_price": safe_float(event.ask_price),
                                 "bid_size": safe_float(event.bid_size),
                                 "ask_size": safe_float(event.ask_size),
-                                "last_price": safe_float(getattr(event, "last_price", None)),
+                                "last_price": safe_float(
+                                    getattr(event, "last_price", None)
+                                ),
                                 "timestamp": datetime.now(timezone.utc).isoformat(),
                             }
                             self.last_quotes[underlying_symbol] = {
                                 "quote_data": quote_data,
-                                "parsed": {"underlying": underlying_symbol}, 
+                                "parsed": {"underlying": underlying_symbol},
                             }
                             await self.broadcast(
                                 symbol,
@@ -192,15 +212,23 @@ class StreamManager:
                                         "ask_price": safe_float(event.ask_price),
                                         "bid_size": safe_float(event.bid_size),
                                         "ask_size": safe_float(event.ask_size),
-                                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                                        "timestamp": datetime.now(
+                                            timezone.utc
+                                        ).isoformat(),
                                     },
                                     "parsed": parsed,
                                 }
-                                await self.try_send_grouped(symbol, expiry, event.event_symbol)
+                                await self.try_send_grouped(
+                                    symbol, expiry, event.event_symbol
+                                )
                             else:
-                                logger.error(f"Failed to parse quote symbol: {event.event_symbol}")
+                                logger.error(
+                                    f"Failed to parse quote symbol: {event.event_symbol}"
+                                )
                     except Exception as e:
-                        logger.error(f"Quote processing error for {event.event_symbol}: {e}")
+                        logger.error(
+                            f"Quote processing error for {event.event_symbol}: {e}"
+                        )
 
             async def listen_greeks():
                 async for event in streamer.listen(Greeks):
@@ -210,7 +238,7 @@ class StreamManager:
                             self.last_greeks[event.event_symbol] = {
                                 "greeks_data": {
                                     "price": safe_float(event.price),
-                                    "IV": safe_float(event.volatility),  
+                                    "IV": safe_float(event.volatility),
                                     "delta": safe_float(event.delta),
                                     "gamma": safe_float(event.gamma),
                                     "theta": safe_float(event.theta),
@@ -220,11 +248,17 @@ class StreamManager:
                                 },
                                 "parsed": parsed,
                             }
-                            await self.try_send_grouped(symbol, expiry, event.event_symbol)
+                            await self.try_send_grouped(
+                                symbol, expiry, event.event_symbol
+                            )
                         else:
-                            logger.error(f"Failed to parse Greeks symbol: {event.event_symbol}")
+                            logger.error(
+                                f"Failed to parse Greeks symbol: {event.event_symbol}"
+                            )
                     except Exception as e:
-                        logger.error(f"Greeks processing error for {event.event_symbol}: {e}")
+                        logger.error(
+                            f"Greeks processing error for {event.event_symbol}: {e}"
+                        )
 
             processors = [
                 asyncio.create_task(listen_quotes()),
@@ -247,7 +281,9 @@ class StreamManager:
             self.message_count = 0
             self.last_reset = datetime.now(timezone.utc)
 
-    async def connect(self, websocket: WebSocket, symbol: str, expiry: str, option_symbols: List[str]):
+    async def connect(
+        self, websocket: WebSocket, symbol: str, expiry: str, option_symbols: List[str]
+    ):
         key = (symbol, expiry)
         await websocket.accept()
         if key not in self.clients:
@@ -256,7 +292,9 @@ class StreamManager:
         logger.info(f"Client connected: {websocket.client} for {symbol} - {expiry}")
 
         if key not in self.tasks:
-            self.tasks[key] = asyncio.create_task(self.start_stream(symbol, expiry, option_symbols))
+            self.tasks[key] = asyncio.create_task(
+                self.start_stream(symbol, expiry, option_symbols)
+            )
 
     def disconnect(self, websocket: WebSocket):
         for key, clients in self.clients.items():

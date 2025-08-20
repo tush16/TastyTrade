@@ -10,7 +10,8 @@ def safe_float(value) -> float:
         return float(value) if value is not None else 0.0
     except (ValueError, TypeError):
         return 0.0
-    
+
+
 def sanitize_inf(data):
     """Recursively replace Infinity/-Infinity/NaN with None (JSON-safe)."""
     if isinstance(data, dict):
@@ -23,17 +24,18 @@ def sanitize_inf(data):
         return data
     return data
 
+
 def parse_option_symbol(symbol: str) -> Optional[dict]:
     """
     Parse Tastytrade option symbol like '.META250822C620'
     Returns both raw + human-readable fields.
     """
-    pattern = r'^\.(\w+?)(\d{6})([CP])(\d+\.?\d*)$'
+    pattern = r"^\.(\w+?)(\d{6})([CP])(\d+\.?\d*)$"
     m = re.match(pattern, symbol.strip())
     if not m:
         logger.error(f"Invalid option symbol format: {symbol}")
         return None
-    
+
     underlying, expiry, call_put, strike = m.groups()
     return {
         "underlying": underlying,
@@ -41,7 +43,7 @@ def parse_option_symbol(symbol: str) -> Optional[dict]:
         "expiry_date": datetime.strptime(expiry, "%y%m%d").strftime("%Y-%m-%d"),
         "call_put": call_put,  # 'C' or 'P'
         "type": "call" if call_put == "C" else "put",
-        "strike": safe_float(strike)
+        "strike": safe_float(strike),
     }
 
 
