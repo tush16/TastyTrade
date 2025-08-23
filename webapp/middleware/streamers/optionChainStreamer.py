@@ -172,6 +172,7 @@ class StreamManager:
             async def listen_quotes():
                 async for event in streamer.listen(Quote):
                     try:
+                        logger.info(f"Received quote event: {event}")
                         if event.event_symbol == underlying_symbol:
                             quote_data = {
                                 "bid_price": safe_float(event.bid_price),
@@ -233,6 +234,7 @@ class StreamManager:
             async def listen_greeks():
                 async for event in streamer.listen(Greeks):
                     try:
+                        logger.info(f"Received greeks event: {event}")
                         parsed = parse_option_symbol(event.event_symbol)
                         if parsed:
                             self.last_greeks[event.event_symbol] = {
