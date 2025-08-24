@@ -1,6 +1,7 @@
 import asyncpg
 from typing import Dict, Any
 
+
 class OptionChainRepository:
     def __init__(self, conn: asyncpg.Connection):
         self.conn = conn

@@ -11,7 +11,7 @@ from utils.common import (
     parse_option_symbol,
     expiry_yymmdd_to_utc_16et,
     sanitize_inf,
-    normalize_option_data
+    normalize_option_data,
 )
 from utils.optionChainMetrics import (
     calculate_pmp_pop_ce_sell,
@@ -153,17 +153,20 @@ class StreamManager:
                 "underlying_price": current_price,
             }
             repo_option_data = normalize_option_data(repo_option_data)
-            logger.info(f"Normalized option data for {event_symbol}: {repo_option_data}")
+            logger.info(
+                f"Normalized option data for {event_symbol}: {repo_option_data}"
+            )
             try:
                 async with get_db_connection() as conn:
                     repo = OptionChainRepository(conn)
-                    logger.info(f"Attempting DB insert for {event_symbol}: {repo_option_data}")
+                    logger.info(
+                        f"Attempting DB insert for {event_symbol}: {repo_option_data}"
+                    )
                     await repo.insert_option_data(repo_option_data)
                     logger.info(f"Successfully inserted {event_symbol} into DB")
             except Exception as e:
                 logger.error(f"DB insert failed for {event_symbol}: {e}", exc_info=True)
                 logger.error(f"Failed payload: {repo_option_data}")
-
 
             # Broadcast to clients
             await self.broadcast(

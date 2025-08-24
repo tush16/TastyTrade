@@ -1,9 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
-from tastytrade.instruments import get_option_chain
 from tastytrade.session import Session
 from datetime import date, datetime
 from collections import defaultdict
-from config.logging import logger
 
 router = APIRouter(tags=["Options API"])
 

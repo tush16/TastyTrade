@@ -65,13 +65,14 @@ def expiry_yymmdd_to_utc_16et(yymmdd: str) -> datetime:
         return datetime.now(timezone.utc)
 
 
-
 def normalize_option_data(data: dict) -> dict:
     def round_val(value, decimals=2):
         if value is None or value in (float("inf"), float("-inf")):
             return None
         try:
-            return Decimal(value).quantize(Decimal(f"1.{'0'*decimals}"), rounding=ROUND_HALF_UP)
+            return Decimal(value).quantize(
+                Decimal(f"1.{'0'*decimals}"), rounding=ROUND_HALF_UP
+            )
         except Exception:
             return None
 
