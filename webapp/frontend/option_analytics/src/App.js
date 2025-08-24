@@ -4,24 +4,25 @@ import ExpirySelector from './components/ExpirySelector';
 import DataTable from './components/DataTable';
 
 const App = () => {
-  const [symbol, setSymbol] = useState('META');
+  const [symbol, setSymbol] = useState('');
   const [expiry, setExpiry] = useState('');
   const [optionSymbols, setOptionSymbols] = useState([]);
 
-  // Reset expiry & option symbols when symbol changes
   useEffect(() => {
     setExpiry('');
     setOptionSymbols([]);
   }, [symbol]);
 
+  const showPlaceholder = !symbol || !expiry || optionSymbols.length === 0;
+
   return (
     <div style={{
       fontFamily: "'Inter', 'Helvetica', 'Arial', sans-serif",
       minHeight: '100vh',
-      width: '100vw',          // take full screen width
+      width: '100vw',
       backgroundColor: '#f9fafb',
-      paddingTop: '4rem',       // space for fixed navbar
-      boxSizing: 'border-box',  // include padding in width
+      paddingTop: '4rem',
+      boxSizing: 'border-box',
     }}>
       <style>
         {`
@@ -31,9 +32,9 @@ const App = () => {
             left: 0;
             right: 0;
             width: 100%;
-            background: linear-gradient(to bottom, #f3f4f6, #ffffff);
+            background: #000000;
             padding: 1rem 1.5rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             z-index: 1000;
             display: flex;
             justify-content: center;
@@ -42,7 +43,7 @@ const App = () => {
           .navbar-title {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #1f2937;
+            color: #ffffff;
             margin: 0;
           }
           .selectors-row {
@@ -63,6 +64,9 @@ const App = () => {
       </style>
 
       <nav className="navbar">
+        {/* Candlestick SVG */}
+        <img src="/candlestick-chart.png" alt="Logo" width="32" height="32" style={{ marginRight: '10px' }} />
+
         <h1 className="navbar-title">Option-Chain Analytics</h1>
       </nav>
 
@@ -79,7 +83,29 @@ const App = () => {
           />
         </div>
 
-        {symbol && expiry && optionSymbols.length > 0 && (
+        {showPlaceholder ? (
+          <div style={{
+            marginTop: '2rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '60vh',
+          }}>
+            <img 
+              src="/bar-chart.png" 
+              alt="Select symbol and expiry"
+              style={{ width: '200px', marginBottom: '16px' }}
+            />
+            <div style={{
+              fontSize: '18px',
+              color: '#6b7280',
+              textAlign: 'center'
+            }}>
+              Please select a symbol and expiry to visualize the option chain
+            </div>
+          </div>
+        ) : (
           <div style={{ width: '100%', overflowX: 'auto' }}>
             <DataTable symbol={symbol} expiry={expiry} optionSymbols={optionSymbols} />
           </div>
