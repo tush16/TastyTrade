@@ -1,7 +1,7 @@
 import React from "react";
 
 const SymbolSelector = ({ value, onChange }) => {
-  const symbols = ["META", "AAPL", "TSLA"];
+  const symbols = ["AAPL", "TSLA", "SMCI", "PLTR", "HOOD", "NVDA", "AMD", "GOOGL", "AMZN", "SPX", "RUT", "IWM", "XSP", "SPY", "QQQ"];
 
   return (
     <div style={{ fontFamily: "'Inter', 'Helvetica', 'Arial', sans-serif" }}>
