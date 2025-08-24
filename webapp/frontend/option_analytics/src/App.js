@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import SelectorContainer from './containers/SelectorContainer';
+import SymbolSelector from './components/SymbolSelector';
+import ExpirySelector from './components/ExpirySelector';
 import DataTable from './components/DataTable';
 
 const App = () => {
@@ -7,6 +8,7 @@ const App = () => {
   const [expiry, setExpiry] = useState('');
   const [optionSymbols, setOptionSymbols] = useState([]);
 
+  // Reset expiry & option symbols when symbol changes
   useEffect(() => {
     setExpiry('');
     setOptionSymbols([]);
@@ -16,7 +18,10 @@ const App = () => {
     <div style={{
       fontFamily: "'Inter', 'Helvetica', 'Arial', sans-serif",
       minHeight: '100vh',
+      width: '100vw',          // take full screen width
       backgroundColor: '#f9fafb',
+      paddingTop: '4rem',       // space for fixed navbar
+      boxSizing: 'border-box',  // include padding in width
     }}>
       <style>
         {`
@@ -25,6 +30,7 @@ const App = () => {
             top: 0;
             left: 0;
             right: 0;
+            width: 100%;
             background: linear-gradient(to bottom, #f3f4f6, #ffffff);
             padding: 1rem 1.5rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -39,33 +45,44 @@ const App = () => {
             color: #1f2937;
             margin: 0;
           }
-          .selector-container {
-            margin-bottom: 2rem; /* Space between SelectorContainer and DataTable */
-            padding-top: 4rem; /* Account for fixed navbar */
-            max-width: 1200px;
-            width: 30%;
+          .selectors-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            padding: 0 1rem;
+            width: 100%;
+          }
+          .content-container {
+            width: 100%;
+            padding: 0 1rem;
             box-sizing: border-box;
           }
         `}
       </style>
 
       <nav className="navbar">
-        <h1 className="navbar-title">Options Analytics</h1>
+        <h1 className="navbar-title">Option-Chain Analytics</h1>
       </nav>
 
       <div className="content-container">
-        <div className="selector-container">
-          <SelectorContainer
+        <div className="selectors-row">
+          <SymbolSelector value={symbol} onChange={setSymbol} />
+          <ExpirySelector
             symbol={symbol}
-            onSymbolChange={setSymbol}
-            onExpiryChange={({ expiry: selectedExpiry, optionSymbols: symbols }) => {
+            selectedExpiry={expiry}
+            onChange={({ expiry: selectedExpiry, optionSymbols: symbols }) => {
               setExpiry(selectedExpiry);
               setOptionSymbols(symbols);
             }}
           />
         </div>
+
         {symbol && expiry && optionSymbols.length > 0 && (
-          <DataTable symbol={symbol} expiry={expiry} optionSymbols={optionSymbols} />
+          <div style={{ width: '100%', overflowX: 'auto' }}>
+            <DataTable symbol={symbol} expiry={expiry} optionSymbols={optionSymbols} />
+          </div>
         )}
       </div>
     </div>

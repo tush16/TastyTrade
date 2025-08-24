@@ -4,14 +4,12 @@ const SymbolSelector = ({ value, onChange }) => {
   const symbols = ["META", "AAPL", "TSLA"];
 
   return (
-    <div style={{
-      fontFamily: "'Inter', 'Helvetica', 'Arial', sans-serif",
-    }}>
+    <div style={{ fontFamily: "'Inter', 'Helvetica', 'Arial', sans-serif" }}>
       <style>
         {`
           .symbol-selector {
             width: 100%;
-            max-width: 200px;
+            max-width: 150px;
             padding: 10px 12px;
             border-radius: 6px;
             border: 1.5px solid #e5e7eb;
@@ -36,42 +34,27 @@ const SymbolSelector = ({ value, onChange }) => {
           }
           .symbol-label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 14px;
             color: #1f2937;
-          }
-          @media (max-width: 768px) {
-            .symbol-selector {
-              font-size: 12px;
-              padding: 8px 10px;
-              max-width: 100%;
-            }
-            .symbol-label {
-              font-size: 14px;
-            }
           }
         `}
       </style>
 
       <div>
         <label htmlFor="symbol-select" className="symbol-label">
-          Select Symbol:
+          Symbol:
         </label>
         <select
           id="symbol-select"
           className="symbol-selector"
           value={value || ""}
           onChange={(e) => onChange(e.target.value)}
-          disabled={symbols.length === 0}
         >
-          <option value="">
-            {symbols.length ? "-- Select Symbol --" : "-- No symbols available --"}
-          </option>
+          <option value="">-- Select Symbol --</option>
           {symbols.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
+            <option key={s} value={s}>{s}</option>
           ))}
         </select>
       </div>

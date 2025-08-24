@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const ExpirySelector = ({ symbol, onChange }) => {
+const ExpirySelector = ({ symbol, selectedExpiry, onChange }) => {
   const [expiryMap, setExpiryMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -15,160 +15,115 @@ const ExpirySelector = ({ symbol, onChange }) => {
       }
       setLoading(true);
       setError(null);
-
       try {
         const response = await axios.get(`http://localhost:8000/option-chains`, {
           params: { symbol },
-          headers: { 'Content-Type': 'application/json' }
         });
         setExpiryMap(response.data || {});
       } catch (err) {
-        console.error("Failed to fetch expiries with symbols", err);
-        setError("Failed to load expiry dates. Please try again.");
+        console.error("Failed to fetch expiries", err);
+        setError("Failed to load expiry dates.");
         setExpiryMap({});
       } finally {
         setLoading(false);
       }
     };
-
     fetchExpiryMap();
   }, [symbol]);
 
   const expiryDates = Object.keys(expiryMap).sort();
 
+  const handleSelect = (expiry) => {
+    onChange({ expiry, optionSymbols: expiryMap[expiry] || [] });
+  };
+
+  const daysToExpiry = (expiry) => {
+    const today = new Date();
+    const expDate = new Date(expiry);
+    const diffTime = expDate - today;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
   return (
-    <div style={{
-      fontFamily: "'Inter', 'Helvetica', 'Arial', sans-serif",
-    }}>
+    <div style={{ fontFamily: "'Inter', 'Helvetica', 'Arial', sans-serif'" }}>
+      {loading ? (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '60px',
+        }}>
+          <div style={{
+            border: '4px solid #f3f3f3',
+            borderTop: '4px solid #2563eb',
+            borderRadius: '50%',
+            width: '24px',
+            height: '24px',
+            animation: 'spin 1s linear infinite'
+          }} />
+          <span style={{ marginLeft: '8px', fontSize: '14px', color: '#2563eb' }}>
+            Loading expiries...
+          </span>
+        </div>
+      ) : error ? (
+        <div style={{
+          color: '#b91c1c',
+          fontSize: '14px',
+          textAlign: 'center',
+          padding: '8px 0'
+        }}>{error}</div>
+      ) : (
+        <div>
+          <label style={{ marginBottom: '4px', display: 'block', fontWeight: 500 }}>Expiry:</label>
+          {/* Scrollable container */}
+          <div style={{
+            display: 'flex',
+            overflowX: 'auto',
+            gap: '8px',
+            paddingBottom: '8px',
+            width: '100%',
+            maxWidth: '800px',
+            WebkitOverflowScrolling: 'touch',
+          }}>
+            {expiryDates.map((expiry) => (
+              <div
+                key={expiry}
+                onClick={() => handleSelect(expiry)}
+                style={{
+                  minWidth: '120px',
+                  flex: '0 0 auto',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: selectedExpiry === expiry ? '2px solid #2563eb' : '1.5px solid #e5e7eb',
+                  backgroundColor: selectedExpiry === expiry ? '#e0f2ff' : '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  fontSize: '14px',
+                }}
+              >
+                <span style={{ fontWeight: 600 }}>
+                  {new Date(expiry).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}
+                </span>
+                <span style={{ fontSize: '12px', color: '#4b5563' }}>
+                  {daysToExpiry(expiry)} days left
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Spinner animation */}
       <style>
         {`
-          .expiry-selector {
-            width: 100%;
-            max-width: 200px;
-            padding: 10px 12px;
-            border-radius: 6px;
-            border: 1.5px solid #e5e7eb;
-            font-size: 14px;
-            color: #1f2937;
-            background-color: #ffffff;
-            cursor: pointer;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-          }
-          .expiry-selector:disabled {
-            background-color: #f9fafb;
-            cursor: not-allowed;
-            opacity: 0.7;
-          }
-          .expiry-selector:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-            outline: none;
-          }
-          .expiry-selector:hover:not(:disabled) {
-            border-color: #2563eb;
-          }
-          .expiry-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            font-size: 16px;
-            color: #1f2937;
-          }
-          .loading-state, .error-state {
-            padding: 12px;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 14px;
-            margin: 8px 0;
-            max-width: 200px;
-          }
-          .loading-state {
-            background: linear-gradient(to right, #f3f4f6, #ffffff);
-            color: #4b5563;
-            position: relative;
-            overflow: hidden;
-          }
-          .loading-state::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(
-              90deg,
-              transparent,
-              rgba(255, 255, 255, 0.3),
-              transparent
-            );
-            animation: shimmer 1.5s infinite;
-          }
-          .error-state {
-            background-color: rgba(254, 226, 226, 0.2);
-            color: #b91c1c;
-            border: 1px solid #fecaca;
-          }
-          @keyframes shimmer {
-            100% { left: 100%; }
-          }
-          @media (max-width: 768px) {
-            .expiry-selector {
-              font-size: 12px;
-              padding: 8px 10px;
-              max-width: 100%;
-            }
-            .expiry-label {
-              font-size: 14px;
-            }
-            .loading-state, .error-state {
-              font-size: 12px;
-              padding: 10px;
-              max-width: 100%;
-            }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
           }
         `}
       </style>
-
-      {loading ? (
-        <div className="loading-state">
-          Loading expiries...
-        </div>
-      ) : error ? (
-        <div className="error-state">
-          {error}
-        </div>
-      ) : (
-        <div>
-          <label htmlFor="expiry-select" className="expiry-label">
-            Select Expiry:
-          </label>
-          <select
-            id="expiry-select"
-            className="expiry-selector"
-            onChange={(e) => {
-              const selectedExpiry = e.target.value;
-              onChange({
-                expiry: selectedExpiry,
-                optionSymbols: expiryMap[selectedExpiry] || []
-              });
-            }}
-            disabled={expiryDates.length === 0}
-          >
-            <option value="">
-              {expiryDates.length ? "-- Select Expiry --" : "-- No expiries available --"}
-            </option>
-            {expiryDates.map((expiry) => (
-              <option key={expiry} value={expiry}>
-                {new Date(expiry).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: '2-digit',
-                  year: 'numeric'
-                })}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
     </div>
   );
 };
