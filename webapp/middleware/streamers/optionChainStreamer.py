@@ -11,11 +11,14 @@ from utils.common import (
     parse_option_symbol,
     expiry_yymmdd_to_utc_16et,
     sanitize_inf,
+    normalize_option_data
 )
 from utils.optionChainMetrics import (
     calculate_pmp_pop_ce_sell,
     calculate_pmp_pop_pe_sell,
 )
+from repositories.optionChainStreamerRepository import OptionChainRepository
+from config.database import get_db_connection
 
 
 class StreamManager:
@@ -130,6 +133,37 @@ class StreamManager:
                 "ev": None if ev is None else round(ev, 4),
                 "underlying_price": current_price,
             }
+            repo_option_data = {
+                "symbol": event_symbol,
+                "underlying_symbol": symbol,
+                "expiry_date": expiry_utc,
+                "strike_price": parsed["strike"],
+                "option_type": option_type,
+                "iv_strike": iv_strike * 100.0,
+                "mid_price": mid_price,
+                "bid_price": bid,
+                "ask_price": ask,
+                "vega": safe_float(greek["greeks_data"].get("vega")),
+                "theta": safe_float(greek["greeks_data"].get("theta")),
+                "pmp": round(pmp, 4),
+                "pop": round(pop, 4),
+                "max_profit": max_profit,
+                "max_loss": max_loss,
+                "ev": None if ev is None else round(ev, 4),
+                "underlying_price": current_price,
+            }
+            repo_option_data = normalize_option_data(repo_option_data)
+            logger.info(f"Normalized option data for {event_symbol}: {repo_option_data}")
+            try:
+                async with get_db_connection() as conn:
+                    repo = OptionChainRepository(conn)
+                    logger.info(f"Attempting DB insert for {event_symbol}: {repo_option_data}")
+                    await repo.insert_option_data(repo_option_data)
+                    logger.info(f"Successfully inserted {event_symbol} into DB")
+            except Exception as e:
+                logger.error(f"DB insert failed for {event_symbol}: {e}", exc_info=True)
+                logger.error(f"Failed payload: {repo_option_data}")
+
 
             # Broadcast to clients
             await self.broadcast(

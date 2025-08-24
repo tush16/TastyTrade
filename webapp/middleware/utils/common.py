@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from config.logging import logger
 import pytz
+from decimal import Decimal, ROUND_HALF_UP
 
 
 def safe_float(value) -> float:
@@ -62,3 +63,34 @@ def expiry_yymmdd_to_utc_16et(yymmdd: str) -> datetime:
     except Exception as e:
         logger.error(f"Error converting expiry {yymmdd} to 16:00 ET: {e}")
         return datetime.now(timezone.utc)
+
+
+
+def normalize_option_data(data: dict) -> dict:
+    def round_val(value, decimals=2):
+        if value is None or value in (float("inf"), float("-inf")):
+            return None
+        try:
+            return Decimal(value).quantize(Decimal(f"1.{'0'*decimals}"), rounding=ROUND_HALF_UP)
+        except Exception:
+            return None
+
+    return {
+        "symbol": data["symbol"],
+        "underlying_symbol": data["underlying_symbol"],
+        "expiry_date": data["expiry_date"],
+        "strike_price": round_val(data["strike_price"], 0),
+        "option_type": data["option_type"],
+        "iv_strike": round_val(data["iv_strike"], 2),
+        "mid_price": round_val(data["mid_price"], 2),
+        "bid_price": round_val(data["bid_price"], 2),
+        "ask_price": round_val(data["ask_price"], 2),
+        "vega": round_val(data["vega"], 4),
+        "theta": round_val(data["theta"], 4),
+        "pmp": round_val(data["pmp"], 2),
+        "pop": round_val(data["pop"], 2),
+        "max_profit": round_val(data["max_profit"], 0),
+        "max_loss": round_val(data["max_loss"], 0),
+        "ev": round_val(data["ev"], 2),
+        "underlying_price": round_val(data["underlying_price"], 2),
+    }
