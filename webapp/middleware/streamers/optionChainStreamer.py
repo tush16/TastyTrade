@@ -79,7 +79,14 @@ class StreamManager:
                     f"Missing prices for {event_symbol}: underlying={current_price}, mid={mid_price}"
                 )
                 return
-
+            strike = parsed["strike"]
+            lower_bound = current_price * 0.95
+            upper_bound = current_price * 1.05
+            if not (lower_bound <= strike <= upper_bound):
+                logger.info(
+                    f"Skipping {event_symbol}: strike {strike} not within ±5% of underlying {current_price}"
+                )
+                return
             # Use strike IV as both strike IV and underlying IV proxy (decimal)
             iv_strike = safe_float(greek["greeks_data"].get("IV"))
             iv_instrument = iv_strike

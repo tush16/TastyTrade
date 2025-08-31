@@ -64,9 +64,7 @@ const App = () => {
       </style>
 
       <nav className="navbar">
-        {/* Candlestick SVG */}
         <img src="/candlestick-chart.png" alt="Logo" width="32" height="32" style={{ marginRight: '10px' }} />
-
         <h1 className="navbar-title">Option-Chain Analytics</h1>
       </nav>
 

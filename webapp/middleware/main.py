@@ -9,6 +9,7 @@ from controllers import (
     optionController,
     optionChainController,
     futuresController,
+    pnfController,
 )
 from config.settings import settings
 from config.logging import logger
@@ -57,6 +58,7 @@ app.include_router(equitiesController.router, dependencies=[Depends(security)])
 app.include_router(optionController.router)
 app.include_router(optionChainController.router)
 app.include_router(futuresController.router, dependencies=[Depends(security)])
+app.include_router(pnfController.router)
 
 
 @app.get("/test-db")
